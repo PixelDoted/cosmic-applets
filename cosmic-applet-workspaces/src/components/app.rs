@@ -4,6 +4,9 @@ use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::mouse::{self, ScrollDelta};
 use cosmic::iced::widget::{column, container, row, text};
 use cosmic::iced::{subscription, widget::button, Event::Mouse, Length, Subscription};
+use cosmic::iced_core::{font, Background, Color, Vector};
+use cosmic::iced_runtime::font::Family;
+use cosmic::iced_runtime::Font;
 use cosmic::iced_style::application;
 use cosmic::theme::Button;
 use cosmic::{Element, Theme};
@@ -119,25 +122,96 @@ impl cosmic::Application for IcedWorkspacesApplet {
             .filter_map(|w| {
                 let btn = button(
                     text(w.0.clone())
-                        .size(14)
+                        .font(Font {
+                            family: Family::Name("Fira Sans"),
+                            weight: font::Weight::Bold,
+                            stretch: font::Stretch::Normal,
+                            monospaced: false,
+                        })
+                        .size(16)
                         .horizontal_alignment(Horizontal::Center)
                         .vertical_alignment(Vertical::Center)
                         .width(Length::Fill)
                         .height(Length::Fill),
                 )
                 .width(Length::Fixed(
-                    self.core.applet_helper.suggested_size().0 as f32 + 16.0,
+                    self.core.applet_helper.suggested_size().0 as f32 + match self.layout {
+                        Layout::Row => 20.0,
+                        Layout::Column => 16.0,
+                    }
                 ))
                 .height(Length::Fixed(
-                    self.core.applet_helper.suggested_size().0 as f32 + 16.0,
+                    self.core.applet_helper.suggested_size().0 as f32 + match self.layout {
+                        Layout::Row => 16.0,
+                        Layout::Column => 20.0,
+                    },
                 ))
                 .on_press(Message::WorkspacePressed(w.2.clone()))
                 .padding(0);
                 Some(
                     btn.style(match w.1 {
-                        Some(zcosmic_workspace_handle_v1::State::Active) => Button::Primary,
-                        Some(zcosmic_workspace_handle_v1::State::Urgent) => Button::Destructive,
-                        None => Button::Secondary,
+                        Some(zcosmic_workspace_handle_v1::State::Active) => Button::Custom {
+                            active: Box::new(|theme: &Theme| button::Appearance {
+                                shadow_offset: Vector::new(0., 0.),
+                                background: Some(Background::Color(
+                                    theme.current_container().component.base.into(),
+                                )),
+                                border_radius: 8.0.into(),
+                                border_width: 0.,
+                                border_color: Color::TRANSPARENT,
+                                text_color: theme.cosmic().accent_button.base.into(),
+                            }),
+                            hover: Box::new(|theme: &Theme| button::Appearance {
+                                shadow_offset: Vector::new(0., 0.),
+                                background: Some(Background::Color(
+                                    theme.current_container().component.hover.into(),
+                                )),
+                                border_radius: 8.0.into(),
+                                border_width: 0.,
+                                border_color: Color::TRANSPARENT,
+                                text_color: theme.cosmic().accent_button.base.into(),
+                            }),
+                        },
+                        Some(zcosmic_workspace_handle_v1::State::Urgent) => Button::Custom {
+                            active: Box::new(|theme: &Theme| button::Appearance {
+                                shadow_offset: Vector::new(0., 0.),
+                                background: None,
+                                border_radius: 8.0.into(),
+                                border_width: 0.,
+                                border_color: Color::TRANSPARENT,
+                                text_color: theme.cosmic().destructive_button.base.into(),
+                            }),
+                            hover: Box::new(|theme: &Theme| button::Appearance {
+                                shadow_offset: Vector::new(0., 0.),
+                                background: Some(Background::Color(
+                                    theme.current_container().component.hover.into(),
+                                )),
+                                border_radius: 8.0.into(),
+                                border_width: 0.,
+                                border_color: Color::TRANSPARENT,
+                                text_color: theme.cosmic().destructive_button.base.into(),
+                            }),
+                        },
+                        None => Button::Custom {
+                            active: Box::new(|theme: &Theme| button::Appearance {
+                                shadow_offset: Vector::new(0., 0.),
+                                background: None,
+                                border_radius: 8.0.into(),
+                                border_width: 0.,
+                                border_color: Color::TRANSPARENT,
+                                text_color: theme.current_container().component.on.into(),
+                            }),
+                            hover: Box::new(|theme: &Theme| button::Appearance {
+                                shadow_offset: Vector::new(0., 0.),
+                                background: Some(Background::Color(
+                                    theme.current_container().component.hover.into(),
+                                )),
+                                border_radius: 8.0.into(),
+                                border_width: 0.,
+                                border_color: Color::TRANSPARENT,
+                                text_color: theme.current_container().component.on.into(),
+                            }),
+                        },
                         _ => return None,
                     })
                     .into(),
@@ -149,11 +223,13 @@ impl cosmic::Application for IcedWorkspacesApplet {
                 .width(Length::Shrink)
                 .height(Length::Shrink)
                 .padding(0)
+                .spacing(4)
                 .into(),
             Layout::Column => column(buttons)
                 .width(Length::Shrink)
                 .height(Length::Shrink)
                 .padding(0)
+                .spacing(4)
                 .into(),
         };
 
